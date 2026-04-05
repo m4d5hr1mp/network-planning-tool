@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Network • Network Planner</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .page { padding: 24px 5%; }
+
+        /* ── Tabs ── */
+        .page-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+        .page-tab {
+            background: none; border: none; border-bottom: 2px solid transparent;
+            color: var(--muted); font-family: inherit; font-size: 14px; font-weight: 500;
+            padding: 10px 20px; cursor: pointer; margin-bottom: -1px;
+            transition: color .15s, border-color .15s;
+        }
+        .page-tab:hover  { color: var(--text); }
+        .page-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ── Compact route table ── */
+        .compact-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .compact-table th {
+            background: var(--surface-2); color: var(--muted); font-weight: 500;
+            font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+            padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .compact-table td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+        .compact-table tr:last-child td { border-bottom: none; }
+        .compact-table tr:hover td { background: var(--surface-2); }
+        .iata { font-weight: 600; font-family: monospace; color: var(--text); font-size: 12px; }
+        .arrow { color: var(--muted); padding: 0 3px; }
+        .ft-pill {
+            font-size: 10px; padding: 1px 6px; border-radius: 3px;
+            background: var(--surface-2); border: 1px solid var(--border); color: var(--muted);
+            white-space: nowrap;
+        }
+        .num { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 11px; }
+        .price-cell { color: var(--muted); font-size: 11px; white-space: nowrap; }
+
+        /* ── Add form ── */
+        .add-form {
+            display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap;
+            padding: 12px 0; border-top: 1px solid var(--border); margin-top: 4px;
+        }
+        .add-form .field { display: flex; flex-direction: column; gap: 4px; }
+        .add-form .field label { font-size: 11px; color: var(--muted); }
+        .add-form input, .add-form select {
+            width: auto; padding: 6px 10px; font-size: 12px;
+        }
+        .add-form .field.w-iata input  { width: 72px; }
+        .add-form .field.w-freq  input  { width: 56px; }
+        .add-form .field.w-dest  input  { width: 90px; }
+
+        /* ── Import panel ── */
+        .import-drop {
+            border: 2px dashed var(--border); border-radius: var(--radius);
+            padding: 24px; text-align: center; cursor: pointer;
+            transition: border-color .15s, background .15s; position: relative;
+        }
+        .import-drop:hover, .import-drop.drag-over {
+            border-color: var(--accent); background: rgba(47,129,247,.05);
+        }
+        .import-drop input[type=file] {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer;
+            width: 100%; height: 100%; padding: 0; border: none; background: none;
+        }
+        .import-drop-icon { font-size: 26px; margin-bottom: 6px; }
+        .import-drop-text { font-size: 13px; color: var(--muted); }
+        .import-drop-text strong { color: var(--accent); }
+
+        .preview-stats { display: flex; gap: 28px; margin: 14px 0 10px; flex-wrap: wrap; }
+        .preview-stat-val { font-size: 20px; font-weight: 600; display: block; }
+        .preview-stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+        .preview-bases { font-size: 12px; color: var(--accent); font-family: monospace; margin-bottom: 10px; }
+        .preview-table-wrap { max-height: 240px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+        .warn-banner {
+            background: rgba(210,153,34,.1); border: 1px solid rgba(210,153,34,.3);
+            border-radius: var(--radius); padding: 8px 12px; font-size: 12px;
+            color: var(--warning); margin: 10px 0;
+        }
+        .mono { font-family: monospace; color: var(--accent); }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <span class="header-brand">✈ Manage Network</span>
+        <nav class="header-nav">
+            <a href="airline-dashboard.html">← Airline</a>
+            <a href="network.html">Map</a>
+            <span class="airline-pill" id="currentAirlineDisplay"></span>
+            <button class="btn btn-sm btn-ghost" onclick="logout()">Log out</button>
+        </nav>
+    </header>
+
+    <div class="page">
+        <div class="context-bar" id="contextBar">Loading…</div>
+
+        <div class="page-tabs">
+            <button class="page-tab active" data-target="tab-bases">Bases</button>
+            <button class="page-tab"        data-target="tab-routes">Routes</button>
+            <button class="page-tab"        data-target="tab-import">Import from AC</button>
+        </div>
+
+        <!-- ── Bases tab ──────────────────────────────────────────────────── -->
+        <div class="tab-content active" id="tab-bases">
+            <div class="panel">
+                <table class="compact-table" id="basesTable">
+                    <thead><tr>
+                        <th>IATA</th><th>AC ID</th><th>Added</th><th style="width:60px"></th>
+                    </tr></thead>
+                    <tbody><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+                </table>
+                <div class="add-form">
+                    <div class="field w-iata">
+                        <label>IATA</label>
+                        <input id="baseIata" placeholder="AMS" maxlength="3" autocomplete="off" style="text-transform:uppercase">
+                    </div>
+                    <button class="btn btn-sm" id="addBaseBtn">+ Add Base</button>
+                </div>
+                <div class="status-msg" id="baseStatus" style="margin-top:6px;font-size:12px"></div>
+            </div>
+        </div>
+
+        <!-- ── Routes tab ─────────────────────────────────────────────────── -->
+        <div class="tab-content" id="tab-routes">
+            <div class="panel">
+                <table class="compact-table" id="routesTable">
+                    <thead><tr>
+                        <th>Route</th><th>Type</th><th>Freq</th>
+                        <th>Cap Y/J/F</th><th>Price Y/J/F</th><th>Added</th>
+                        <th style="width:60px"></th>
+                    </tr></thead>
+                    <tbody><tr><td colspan="7" class="empty">Loading…</td></tr></tbody>
+                </table>
+                <div class="add-form">
+                    <div class="field">
+                        <label>Origin (base)</label>
+                        <select id="routeOrigin" style="width:90px"><option value="">— base —</option></select>
+                    </div>
+                    <div class="field w-dest">
+                        <label>Destination</label>
+                        <input id="routeDest" placeholder="CDG" maxlength="3" autocomplete="off" style="text-transform:uppercase">
+                    </div>
+                    <div class="field w-freq">
+                        <label>Freq/wk</label>
+                        <input id="routeFreq" type="number" value="7" min="1" max="9999">
+                    </div>
+                    <button class="btn btn-sm" id="addRouteBtn">+ Add Route</button>
+                </div>
+                <div class="status-msg" id="routeStatus" style="margin-top:6px;font-size:12px"></div>
+            </div>
+        </div>
+
+        <!-- ── Import tab ─────────────────────────────────────────────────── -->
+        <div class="tab-content" id="tab-import">
+            <div class="panel">
+                <p class="hint" style="margin-bottom:14px">
+                    Export from Airline Club → Your airline → Links → Export JSON.
+                    Importing will replace all existing routes and bases for this airline.
+                </p>
+
+                <div class="import-drop" id="dropZone">
+                    <input type="file" id="jsonFileInput" accept=".json" onchange="onFileSelected(event)">
+                    <div class="import-drop-icon">📂</div>
+                    <div class="import-drop-text">Drop <strong>links.json</strong> here or click to browse</div>
+                </div>
+
+                <div id="previewSection" style="display:none;margin-top:16px">
+                    <div class="preview-stats">
+                        <div><span class="preview-stat-val" id="prevRouteCount">—</span><span class="preview-stat-lbl">Routes</span></div>
+                        <div><span class="preview-stat-val" id="prevBaseCount">—</span><span class="preview-stat-lbl">Bases</span></div>
+                        <div><span class="preview-stat-val" id="prevTotalPax">—</span><span class="preview-stat-lbl">Weekly seats</span></div>
+                    </div>
+                    <div class="preview-bases" id="prevBaseList"></div>
+                    <div class="warn-banner">⚠ This will <strong>replace all existing routes and bases</strong> for this airline.</div>
+                    <div class="preview-table-wrap">
+                        <table class="compact-table" id="prevTable">
+                            <thead><tr>
+                                <th>Route</th><th>Type</th><th>Freq</th>
+                                <th>Cap Y/J/F</th><th>Price Y/J/F</th>
+                            </tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:12px;align-items:center">
+                        <button class="btn btn-success" id="importBtn" onclick="confirmImport()">Import — replace network</button>
+                        <button class="btn btn-ghost" onclick="cancelImport()">Cancel</button>
+                        <div class="status-msg" id="importStatus" style="margin-left:6px;font-size:12px"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script type="module" src="./js/pages/airline-mgmt/AirlineMgmt.js"></script>
+    <script>
+        // Tab switching — plain script so it works without module load
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll(".page-tab").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const target = btn.dataset.target;
+                    document.querySelectorAll(".page-tab").forEach(b => b.classList.remove("active"));
+                    document.querySelectorAll(".tab-content").forEach(p => p.classList.remove("active"));
+                    btn.classList.add("active");
+                    document.getElementById(target)?.classList.add("active");
+                });
+            });
+        });
+    </script>
+</body>
+</html>

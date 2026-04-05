@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login • Network Planner</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { display: flex; align-items: center; justify-content: center; }
+        .wrap { width: 100%; max-width: 360px; padding: 24px; }
+        .brand { text-align: center; margin-bottom: 32px; }
+        .brand-icon { font-size: 32px; margin-bottom: 8px; }
+        .brand-name { font-size: 20px; font-weight: 600; }
+        .brand-sub  { font-size: 13px; color: var(--muted); margin-top: 4px; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="brand">
+            <div class="brand-icon">✈</div>
+            <div class="brand-name">Network Planner</div>
+            <div class="brand-sub">Enter the team passkey to continue</div>
+        </div>
+        <div class="card">
+            <div class="stack">
+                <div class="field">
+                    <label>Team Passkey (32-char hex)</label>
+                    <input type="password" id="passkeyInput" placeholder="••••••••••••••••••••••••••••••••" maxlength="32" autocomplete="off">
+                </div>
+                <button class="btn btn-lg" id="loginBtn">Continue</button>
+            </div>
+            <div class="error-msg" id="status" style="margin-top:10px"></div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script type="module" src="./js/pages/Login.js"></script>
+</body>
+</html>

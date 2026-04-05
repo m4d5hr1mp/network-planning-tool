@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airline Dashboard • Network Planner</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .header { position: relative; }
+        .header-center { position: absolute; left: 50%; transform: translateX(-50%); font-size: 15px; font-weight: 600; color: var(--text); pointer-events: none; }
+        .page { padding: 24px 5%; }
+
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: 25% 75%; gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; overflow: hidden; }
+        .stats-left { border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+        .stats-left-title { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; align-self: flex-start; }
+        .donut-wrap { position: relative; width: 140px; height: 140px; }
+        .donut { width: 140px; height: 140px; border-radius: 50%; background: conic-gradient(var(--accent) 0% 70%, var(--success) 70% 91%, var(--warning) 91% 100%); }
+        .donut-hole { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 76px; height: 76px; background: var(--surface); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--muted); text-align: center; line-height: 1.4; }
+        .legend { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .legend-label { color: var(--muted); flex: 1; }
+        .legend-val { color: var(--text); font-variant-numeric: tabular-nums; }
+        .legend-pct { color: var(--muted); font-size: 11px; width: 32px; text-align: right; }
+        .pax-total { font-size: 18px; font-weight: 600; align-self: flex-start; }
+        .pax-total span { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 4px; }
+        .stats-right { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+        .stats-right-title { font-size: 13px; font-weight: 600; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+        .metrics-row { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
+        .metric { display: flex; flex-direction: column; gap: 3px; }
+        .metric-label { font-size: 11px; color: var(--muted); }
+        .metric-value { font-size: 20px; font-weight: 600; }
+        .metric-unit { font-size: 11px; color: var(--muted); }
+        .haul-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .haul-table th { padding: 7px 10px; text-align: center; color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid var(--border); }
+        .haul-table th:first-child { text-align: left; }
+        .haul-table td { padding: 6px 10px; text-align: center; border-bottom: 1px solid var(--border); color: var(--muted); }
+        .haul-table td:first-child { text-align: left; color: var(--text); font-weight: 500; }
+        .haul-table tr:last-child td { border-bottom: none; }
+
+        /* TODO */
+        .todo-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .todo-title { font-size: 15px; font-weight: 600; flex: 1; }
+        .todo-filter { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; }
+        .todo-filter input[type=checkbox] { width: auto; padding: 0; cursor: pointer; accent-color: var(--accent); }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+        .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; color: var(--muted); font-family: inherit; font-size: 13px; font-weight: 500; padding: 8px 16px; cursor: pointer; margin-bottom: -1px; transition: color .15s, border-color .15s; }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+        .todo-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .todo-table th { background: var(--surface-2); color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        .todo-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        .todo-table tr:last-child td { border-bottom: none; }
+        .todo-table tr.ignored { opacity: .4; }
+        .author-me { color: var(--accent); font-weight: 500; }
+        .action-tag { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 3px; background: var(--surface-2); border: 1px solid var(--border); white-space: nowrap; }
+        .target-code { font-size: 12px; color: var(--accent); font-family: monospace; }
+        .comment-cell { color: var(--muted); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .actions-cell { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .todo-empty { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; font-style: italic; }
+        .btn-subtle { background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
+        .btn-subtle:hover { background: var(--border); }
+
+        /* Inline mutation error shown in table row */
+        .mutation-error { font-size: 11px; color: var(--danger); margin-top: 4px; }
+
+        /* Toast */
+        #toast { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+        .toast-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,.4); animation: fadeIn .2s ease; max-width: 340px; }
+        .toast-item.error { border-left: 3px solid var(--danger); }
+        .toast-item.success { border-left: 3px solid var(--success); }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: none; } }
+    </style>
+</head>
+<body>
+
+    <!-- Unified Item Modal (issues + reminders) -->
+    <div class="modal-overlay" id="itemModal">
+        <div class="modal" style="max-width:500px">
+            <div class="modal-title" id="modalTitle">Add Item</div>
+            <div class="modal-sub" id="modalSub">Create a request to another airline, or a reminder to yourself</div>
+            <div class="stack">
+                <div class="field">
+                    <label>To</label>
+                    <select id="composeTo" onchange="onRecipientChange()">
+                        <option value="">— select —</option>
+                        <option value="__self__">📌 Self — Reminder (stored locally)</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Type</label>
+                    <select id="composeType" onchange="onTypeChange()">
+                        <option value="">— select type —</option>
+                    </select>
+                </div>
+                <div id="targetSection" style="display:none"></div>
+                <div class="field">
+                    <label id="messageLabel">Message / Comment</label>
+                    <textarea id="composeMessage" maxlength="1024" placeholder="Optional for most types; required for Free Form"
+                        oninput="document.getElementById('charCount').textContent=this.value.length"></textarea>
+                    <div class="char-count"><span id="charCount">0</span> / 1024</div>
+                </div>
+            </div>
+            <div class="error-msg" id="itemError" style="margin-top:10px"></div>
+            <div class="modal-actions">
+                <button class="btn btn-success" onclick="saveItem()">Save</button>
+                <button class="btn btn-ghost" onclick="closeItemModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <button class="btn btn-ghost btn-sm" onclick="location.href='dashboard.html'">← Back</button>
+        <span class="header-center" id="headerAirlineName">—</span>
+        <nav class="header-nav">
+            <a href="airline-mgmt.html">Routes</a>
+            <a href="network.html">Map</a>
+            <button class="btn btn-sm" onclick="openItemModal()">+ Add Item</button>
+            <button class="btn btn-sm btn-ghost" onclick="logout()">Log out</button>
+        </nav>
+    </header>
+
+    <div class="page">
+
+        <!-- Stats panel (dummy) -->
+        <div class="stats-grid">
+            <div class="stats-left">
+                <div class="stats-left-title">Passenger Class Shares</div>
+                <div class="donut-wrap">
+                    <div class="donut"></div>
+                    <div class="donut-hole">Pax<br>Split</div>
+                </div>
+                <div class="pax-total">—<span>total pax</span></div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div><span class="legend-label">Economy</span><span class="legend-val">—</span><span class="legend-pct">—%</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div><span class="legend-label">Business</span><span class="legend-val">—</span><span class="legend-pct">—%</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div><span class="legend-label">First</span><span class="legend-val">—</span><span class="legend-pct">—%</span></div>
+                </div>
+            </div>
+            <div class="stats-right">
+                <div class="stats-right-title" id="statsTitle">— Network Information</div>
+                <div class="metrics-row">
+                    <div class="metric"><span class="metric-label">Avg Route Length</span><span class="metric-value">—</span><span class="metric-unit">km</span></div>
+                    <div class="metric"><span class="metric-label">Avg Frequency</span><span class="metric-value">—</span><span class="metric-unit">flights / wk</span></div>
+                    <div class="metric"><span class="metric-label">Avg Revenue / km</span><span class="metric-value">—</span><span class="metric-unit">USD</span></div>
+                    <div class="metric"><span class="metric-label">Avg Profit / km</span><span class="metric-value">—</span><span class="metric-unit">USD</span></div>
+                    <div class="metric"><span class="metric-label">Operational Margin</span><span class="metric-value">—</span><span class="metric-unit">%</span></div>
+                </div>
+                <div>
+                    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Route Revenue Statistics</div>
+                    <table class="haul-table">
+                        <thead><tr><th></th><th>Feeders</th><th>Short Haul</th><th>Medium Haul</th><th>Intercontinental</th><th>ULH IC</th></tr></thead>
+                        <tbody>
+                            <tr><td>Avg Length</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                            <tr><td>Avg Price Y / J / F</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                            <tr><td>Price % of default</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                            <tr><td>Profit Margin</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TODO panel -->
+        <div class="panel">
+            <div class="todo-header">
+                <span class="todo-title" id="todoTitle">— To Do List</span>
+                <label class="todo-filter">
+                    <input type="checkbox" id="filterMine" onchange="renderTodos()">
+                    Show my items only
+                </label>
+            </div>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="routes">Routes</button>
+                <button class="tab-btn"         data-tab="infra">Infrastructure</button>
+            </div>
+            <div id="todoBody"><div class="todo-empty">Loading…</div></div>
+        </div>
+
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script type="module" src="./js/pages/airline-dashboard/AirlineDashboard.js"></script>
+</body>
+</html>

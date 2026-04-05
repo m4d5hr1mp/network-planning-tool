@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Map • Network Planner</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { overflow: hidden; }
+        #map { position: fixed; inset: 48px 0 0 0; z-index: 0; }
+
+        /* ── Sidebar ── */
+        #sidebar {
+            position: fixed; top: 48px; left: 0; bottom: 0;
+            width: 260px; z-index: 10;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            transform: translateX(-260px);
+            transition: transform .22s ease;
+        }
+        #sidebar.open { transform: translateX(0); }
+        #sidebar-toggle {
+            position: fixed; top: 60px; left: 8px; z-index: 11;
+            background: var(--surface); border: 1px solid var(--border);
+            color: var(--text); border-radius: var(--radius);
+            padding: 5px 10px; font-size: 13px; cursor: pointer;
+            transition: left .22s ease;
+        }
+        #sidebar.open ~ #sidebar-toggle { left: 268px; }
+
+        .sidebar-inner { padding: 14px; overflow-y: auto; flex: 1; }
+        .sidebar-section { margin-bottom: 18px; }
+        .sidebar-section-title {
+            font-size: 11px; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: .05em;
+            margin-bottom: 8px;
+        }
+        .filter-item {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; padding: 3px 0; cursor: pointer;
+        }
+        .filter-item input[type=checkbox] {
+            width: auto; padding: 0; accent-color: var(--accent); cursor: pointer;
+        }
+        .airline-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .sidebar-footer {
+            padding: 10px 14px; border-top: 1px solid var(--border);
+            font-size: 11px; color: var(--muted);
+        }
+
+        /* ── Issue modal (same as dashboard, self-contained) ── */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(1,4,9,.75); z-index:100; align-items:center; justify-content:center; }
+        .modal-overlay.active { display:flex; }
+        .modal { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:24px; width:100%; max-width:460px; box-shadow:0 16px 48px rgba(1,4,9,.6); }
+        .modal-title { font-size:16px; font-weight:600; margin-bottom:4px; }
+        .modal-sub { font-size:12px; color:var(--muted); margin-bottom:18px; }
+        .modal-actions { display:flex; gap:8px; margin-top:16px; }
+
+        /* ── Popup styles (injected into Leaflet popup DOM) ── */
+        .lf-popup { font-family: inherit; font-size: 12px; color: var(--text); min-width: 180px; }
+        .lf-popup-title { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+        .lf-popup-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 3px; color: #8b949e; }
+        .lf-popup-row span:last-child { color: #e6edf3; text-align: right; }
+        .lf-popup-divider { border: none; border-top: 1px solid #30363d; margin: 8px 0; }
+        .lf-popup-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+        .lf-btn {
+            font-size: 11px; padding: 3px 8px; border-radius: 4px; border: none;
+            cursor: pointer; font-family: inherit; font-weight: 500;
+        }
+        .lf-btn-primary { background: #2f81f7; color: white; }
+        .lf-btn-ghost   { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
+
+        /* ── Toast ── */
+        #toast { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+        .toast-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px 16px; font-size:13px; box-shadow:0 4px 16px rgba(0,0,0,.4); max-width:320px; }
+        .toast-item.success { border-left:3px solid var(--success); }
+        .toast-item.error   { border-left:3px solid var(--danger); }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <span class="header-brand">🗺 Network Map</span>
+        <nav class="header-nav">
+            <a href="airline-dashboard.html">← Airline</a>
+            <a href="airline-mgmt.html">Manage</a>
+            <span class="airline-pill" id="currentAirlineDisplay"></span>
+            <button class="btn btn-sm btn-ghost" onclick="logout()">Log out</button>
+        </nav>
+    </header>
+
+    <!-- Sidebar -->
+    <div id="sidebar">
+        <div class="sidebar-inner">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Airlines</div>
+                <div id="airlineFilters"><div style="color:var(--muted);font-size:12px">Loading…</div></div>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Route Type</div>
+                <div id="typeFilters"></div>
+            </div>
+            <div class="sidebar-section">
+                <button class="btn btn-sm btn-ghost" style="width:100%" onclick="window._mapView?.resetFilters()">Reset filters</button>
+            </div>
+        </div>
+        <div class="sidebar-footer" id="mapStats">—</div>
+    </div>
+    <button id="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ Filters</button>
+
+    <!-- Raise Issue Modal (pre-filled from map) -->
+    <div class="modal-overlay" id="issueModal">
+        <div class="modal">
+            <div class="modal-title">Raise a Request</div>
+            <div class="modal-sub" id="issueModalSub">From the network map</div>
+            <div class="stack">
+                <div class="field">
+                    <label>To airline</label>
+                    <select id="issueModalTo"><option value="">— select —</option></select>
+                </div>
+                <div class="field">
+                    <label>Type</label>
+                    <select id="issueModalType" onchange="window._mapView?.onIssueTypeChange()">
+                        <option value="">— select type —</option>
+                    </select>
+                </div>
+                <div id="issueModalTarget" style="display:none"></div>
+                <div class="field">
+                    <label>Message</label>
+                    <textarea id="issueModalMsg" maxlength="1024" placeholder="Optional"></textarea>
+                </div>
+            </div>
+            <div class="error-msg" id="issueModalError" style="margin-top:10px"></div>
+            <div class="modal-actions">
+                <button class="btn btn-success" onclick="window._mapView?.sendIssue()">Send</button>
+                <button class="btn btn-ghost" onclick="window._mapView?.closeIssueModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+    <div id="toast"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script type="module" src="./js/pages/network/NetworkView.js"></script>
+</body>
+</html>

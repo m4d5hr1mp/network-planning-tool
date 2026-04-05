@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Planner</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .login-wrap { width: 100%; max-width: 360px; padding: 24px; }
+        .brand { text-align: center; margin-bottom: 32px; }
+        .brand-icon { font-size: 32px; margin-bottom: 8px; }
+        .brand-name { font-size: 20px; font-weight: 600; }
+        .brand-sub  { font-size: 13px; color: var(--muted); margin-top: 4px; }
+        .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; }
+        .login-footer { text-align: center; margin-top: 16px; font-size: 13px; color: var(--muted); }
+        .login-footer button { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 13px; font-family: inherit; padding: 0; }
+        .login-footer button:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <!-- Create Airline Modal -->
+    <div class="modal-overlay" id="createModal">
+        <div class="modal">
+            <div class="modal-title">Create Airline</div>
+            <div class="modal-sub">New account for a team member</div>
+            <div class="stack">
+                <div class="field"><label>Username</label><input id="newUsername" placeholder="e.g. klm_ops" autocomplete="off"></div>
+                <div class="field"><label>Display Name</label><input id="newDisplayName" placeholder="e.g. KLM Royal Dutch Airlines"></div>
+                <div class="field"><label>Password</label><input id="newPassword" type="password" autocomplete="new-password"></div>
+            </div>
+            <div class="error-msg" id="createError" style="margin-top:10px"></div>
+            <div class="modal-actions">
+                <button class="btn btn-success" id="createBtn">Create</button>
+                <button class="btn btn-ghost" id="cancelCreateBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="login-wrap">
+        <div class="brand">
+            <div class="brand-icon">✈</div>
+            <div class="brand-name">Network Planner</div>
+            <div class="brand-sub">Airline route management tool</div>
+        </div>
+        <div class="login-card">
+            <div class="stack">
+                <div class="field"><label>Username</label><input id="loginUsername" placeholder="Your airline username" autocomplete="username"></div>
+                <div class="field"><label>Password</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
+                <button class="btn btn-lg" id="loginBtn">Log in</button>
+            </div>
+            <div class="error-msg" id="loginError" style="margin-top:10px"></div>
+        </div>
+        <div class="login-footer">
+            New airline? <button id="openCreateBtn">Create account</button>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <script type="module">
+        import { loginWithCredentials, createAirlineAccount } from "./js/Authentication.js";
+        import { setCurrentAirlineId, setCurrentAirlineDisplay } from "./js/App.js";
+        import { openModal, closeModal, initOverlayClose } from "./js/ui/Modal.js";
+
+        initOverlayClose("createModal");
+
+        document.getElementById("openCreateBtn").addEventListener("click", () => openModal("createModal"));
+        document.getElementById("cancelCreateBtn").addEventListener("click", () => closeModal("createModal"));
+
+        document.getElementById("loginBtn").addEventListener("click", login);
+        document.getElementById("loginPassword").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+
+        document.getElementById("createBtn").addEventListener("click", createAirline);
+
+        async function login() {
+            const username = document.getElementById("loginUsername").value.trim();
+            const password = document.getElementById("loginPassword").value;
+            const errEl    = document.getElementById("loginError");
+            errEl.textContent = "";
+            try {
+                const airline = await loginWithCredentials(username, password);
+                setCurrentAirlineId(airline.id);
+                setCurrentAirlineDisplay(airline.username);
+                window.location.href = "airline-dashboard.html";
+            } catch(e) {
+                errEl.textContent = e.message;
+            }
+        }
+
+        async function createAirline() {
+            const username    = document.getElementById("newUsername").value.trim();
+            const displayName = document.getElementById("newDisplayName").value.trim();
+            const password    = document.getElementById("newPassword").value;
+            const errEl       = document.getElementById("createError");
+            errEl.textContent = "";
+            try {
+                const airline = await createAirlineAccount(username, displayName, password);
+                setCurrentAirlineId(airline.id);
+                setCurrentAirlineDisplay(airline.username);
+                closeModal("createModal");
+                window.location.href = "airline-dashboard.html";
+            } catch(e) {
+                errEl.textContent = e.message;
+            }
+        }
+    </script>
+</body>
+</html>
