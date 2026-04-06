@@ -134,31 +134,31 @@
                     <div class="donut"></div>
                     <div class="donut-hole">Pax<br>Split</div>
                 </div>
-                <div class="pax-total">—<span>total pax</span></div>
+                <div class="pax-total"><span id="statPaxTotal">—</span><span>total pax</span></div>
                 <div class="legend">
-                    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div><span class="legend-label">Economy</span><span class="legend-val">—</span><span class="legend-pct">—%</span></div>
-                    <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div><span class="legend-label">Business</span><span class="legend-val">—</span><span class="legend-pct">—%</span></div>
-                    <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div><span class="legend-label">First</span><span class="legend-val">—</span><span class="legend-pct">—%</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div><span class="legend-label">Economy</span><span class="legend-val" id="statPaxY">—</span><span class="legend-pct" id="statPaxYpct">—%</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div><span class="legend-label">Business</span><span class="legend-val" id="statPaxJ">—</span><span class="legend-pct" id="statPaxJpct">—%</span></div>
+                    <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div><span class="legend-label">First</span><span class="legend-val" id="statPaxF">—</span><span class="legend-pct" id="statPaxFpct">—%</span></div>
                 </div>
             </div>
             <div class="stats-right">
                 <div class="stats-right-title" id="statsTitle">— Network Information</div>
                 <div class="metrics-row">
-                    <div class="metric"><span class="metric-label">Avg Route Length</span><span class="metric-value">—</span><span class="metric-unit">km</span></div>
-                    <div class="metric"><span class="metric-label">Avg Frequency</span><span class="metric-value">—</span><span class="metric-unit">flights / wk</span></div>
-                    <div class="metric"><span class="metric-label">Avg Revenue / km</span><span class="metric-value">—</span><span class="metric-unit">USD</span></div>
-                    <div class="metric"><span class="metric-label">Avg Profit / km</span><span class="metric-value">—</span><span class="metric-unit">USD</span></div>
-                    <div class="metric"><span class="metric-label">Operational Margin</span><span class="metric-value">—</span><span class="metric-unit">%</span></div>
+                    <div class="metric"><span class="metric-label">Avg Route Length</span><span class="metric-value" id="statAvgDist">—</span><span class="metric-unit">km</span></div>
+                    <div class="metric"><span class="metric-label">Avg Frequency</span><span class="metric-value" id="statAvgFreq">—</span><span class="metric-unit">flights / wk</span></div>
+                    <div class="metric"><span class="metric-label">Avg Revenue / km</span><span class="metric-value" id="statRevKm">—</span><span class="metric-unit">USD</span></div>
+                    <div class="metric"><span class="metric-label">Avg Profit / km</span><span class="metric-value" id="statProfKm">—</span><span class="metric-unit">USD</span></div>
+                    <div class="metric"><span class="metric-label">Operational Margin</span><span class="metric-value" id="statMargin">—</span><span class="metric-unit">%</span></div>
                 </div>
                 <div>
                     <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Route Revenue Statistics</div>
                     <table class="haul-table">
                         <thead><tr><th></th><th>Feeders</th><th>Short Haul</th><th>Medium Haul</th><th>Intercontinental</th><th>ULH IC</th></tr></thead>
                         <tbody>
-                            <tr><td>Avg Length</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
-                            <tr><td>Avg Price Y / J / F</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
-                            <tr><td>Price % of default</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
-                            <tr><td>Profit Margin</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                            <tr><td>Avg Length</td><td id="haulLenF">—</td><td id="haulLenSH">—</td><td id="haulLenMH">—</td><td id="haulLenIC">—</td><td id="haulLenULH">—</td></tr>
+                            <tr><td>Avg Price Y / J / F</td><td id="haulPriceStrF">—</td><td id="haulPriceStrSH">—</td><td id="haulPriceStrMH">—</td><td id="haulPriceStrIC">—</td><td id="haulPriceStrULH">—</td></tr>
+                            <tr><td>Price % of default</td><td id="haulPricePctF">—</td><td id="haulPricePctSH">—</td><td id="haulPricePctMH">—</td><td id="haulPricePctIC">—</td><td id="haulPricePctULH">—</td></tr>
+                            <tr><td>Profit Margin</td><td id="haulMarginF">—</td><td id="haulMarginSH">—</td><td id="haulMarginMH">—</td><td id="haulMarginIC">—</td><td id="haulMarginULH">—</td></tr>
                         </tbody>
                     </table>
                 </div>

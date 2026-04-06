@@ -65,6 +65,7 @@ function cleanRoute(raw) {
         originAcId:      raw.fromAirportId,
         destinationAcId: raw.toAirportId,
         frequency:       raw.frequency,
+        distance:        raw.distance || null,   // km, from AC export
         flightType:      raw.flightType || null,
         capacity: {
             economy:  raw.capacity.economy  || 0,

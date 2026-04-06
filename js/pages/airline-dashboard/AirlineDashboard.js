@@ -1,7 +1,8 @@
 // js/pages/airline-dashboard/AirlineDashboard.js
 
-import AirlineDAO from "../../dao/AirlineDAO.js";
-import RouteDAO   from "../../dao/RouteDAO.js";
+import AirlineDAO     from "../../dao/AirlineDAO.js";
+import AirlineBaseDAO from "../../dao/AirlineBaseDAO.js";
+import RouteDAO       from "../../dao/RouteDAO.js";
 import IssueDAO   from "../../dao/IssueDAO.js";
 import { getCurrentAirlineId, updateNavAirlineDisplay } from "../../App.js";
 import { populateStatistics } from "./AirlineStatistics.js";
@@ -87,16 +88,17 @@ window.renderTodos       = (...a) => tasksRenderTodos?.(...a);
 window.addEventListener("load", async () => {
     updateNavAirlineDisplay();
 
-    let me, routes, inboxIssues, allAirlines;
+    let me, routes, bases, inboxIssues, allAirlines;
 
     try {
-        [me, routes] = await Promise.all([
+        [me, routes, bases] = await Promise.all([
             AirlineDAO.getById(myId),
-            RouteDAO.getAllForAirline(myId)
+            RouteDAO.getAllForAirline(myId),
+            AirlineBaseDAO.getAllForAirline(myId)
         ]);
     } catch(e) {
         console.error("[Dashboard] Failed to load airline data:", e);
-        me = null; routes = [];
+        me = null; routes = []; bases = [];
     }
 
     try {
@@ -118,11 +120,11 @@ window.addEventListener("load", async () => {
             </div>`;
     }
 
-    const myUsername = me?.username || myId;
+    const myUsername = me?.displayName || me?.username || myId;
     const headerTitle = document.getElementById("headerAirlineName");
     if (headerTitle) headerTitle.textContent = myUsername;
 
-    populateStatistics(me, routes);
+    populateStatistics(me, routes, bases);
 
     if (typeof tasksInit === "function") {
         tasksInit({ myId, myUsername, allAirlines, inboxIssues, myRoutes: routes });

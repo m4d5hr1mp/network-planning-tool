@@ -56,6 +56,74 @@
         .add-form .field.w-freq  input  { width: 56px; }
         .add-form .field.w-dest  input  { width: 90px; }
 
+        /* ── Filter bar ── */
+        .filter-bar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+        .filter-row { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+        .filter-field { display: flex; flex-direction: column; gap: 4px; }
+        .filter-field label { font-size: 11px; color: var(--muted); font-weight: 500; }
+        .filter-check { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); cursor: pointer; }
+        .filter-check input { width: auto; padding: 0; accent-color: var(--accent); }
+        .filter-bar input[type=number], .filter-bar input[type=text], .filter-bar select {
+            padding: 5px 8px; font-size: 12px; background: var(--surface-2);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            color: var(--text); font-family: inherit;
+        }
+        .filter-bar input:focus, .filter-bar select:focus {
+            outline: none; border-color: var(--accent);
+        }
+        /* Multi-select dropdown */
+        .multi-select-wrap { position: relative; }
+        .multi-select-btn {
+            background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius);
+            color: var(--text); font-family: inherit; font-size: 12px; padding: 5px 10px;
+            cursor: pointer; white-space: nowrap; min-width: 110px; text-align: left;
+        }
+        .multi-select-btn:hover { border-color: var(--accent); }
+        .multi-select-dropdown {
+            position: absolute; top: 100%; left: 0; z-index: 50; margin-top: 3px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            box-shadow: 0 8px 24px rgba(0,0,0,.4); padding: 6px; min-width: 140px; max-height: 200px; overflow-y: auto;
+        }
+        .multi-select-option { display: flex; align-items: center; gap: 7px; padding: 4px 6px; font-size: 12px; cursor: pointer; border-radius: 3px; }
+        .multi-select-option:hover { background: var(--surface-2); }
+        .multi-select-option input { width: auto; padding: 0; accent-color: var(--accent); }
+
+        /* ── Routes table ── */
+        .routes-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .routes-table th {
+            background: var(--surface-2); color: var(--muted); font-weight: 500;
+            font-size: 11px; padding: 7px 8px; text-align: left;
+            border-bottom: 1px solid var(--border); white-space: nowrap;
+        }
+        .routes-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        .routes-table tr:last-child td { border-bottom: none; }
+        .routes-table tr:hover td { background: rgba(255,255,255,.02); }
+        .group-header { text-align: center !important; font-size: 10px !important; letter-spacing: .05em; text-transform: uppercase; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+        .cap-group   { background: rgba(63,185,80,.08) !important; color: var(--success) !important; }
+        .price-group { background: rgba(47,129,247,.08) !important; color: var(--accent) !important; }
+        .sub-th { text-align: center !important; font-size: 10px !important; padding: 4px 8px !important; }
+        .eco-th   { color: var(--success) !important; border-top: 1px solid rgba(63,185,80,.3); }
+        .biz-th   { color: var(--accent)  !important; border-top: 1px solid rgba(47,129,247,.3); }
+        .first-th { color: var(--warning) !important; border-top: 1px solid rgba(210,153,34,.3); }
+        .sortable { cursor: pointer; user-select: none; }
+        .sortable:hover { color: var(--text) !important; }
+        .sort-ind { font-size: 9px; opacity: .5; }
+        .sortable.asc  .sort-ind::after { content: " ▲"; opacity: 1; }
+        .sortable.desc .sort-ind::after { content: " ▼"; opacity: 1; }
+
+        /* Pills */
+        .pill { display: inline-block; font-size: 11px; font-weight: 500; padding: 1px 6px; border-radius: 3px; white-space: nowrap; font-variant-numeric: tabular-nums; text-align: right; min-width: 40px; }
+        .pill-eco   { background: rgba(63,185,80,.12);  color: #3fb950; border: 1px solid rgba(63,185,80,.25); }
+        .pill-biz   { background: rgba(47,129,247,.12); color: #79c0ff; border: 1px solid rgba(47,129,247,.25); }
+        .pill-first { background: rgba(210,153,34,.12); color: #d29922; border: 1px solid rgba(210,153,34,.25); }
+        .pill-cell  { text-align: center; }
+        .pill-verbose { display: block; font-size: 9px; color: var(--muted); margin-top: 1px; }
+
+        /* IATA in routes table */
+        .rt-iata { font-weight: 700; font-family: monospace; font-size: 12px; }
+        .rt-dist { color: var(--muted); font-size: 11px; }
+        .rt-freq { font-variant-numeric: tabular-nums; }
+
         /* ── Import panel ── */
         .import-drop {
             border: 2px dashed var(--border); border-radius: var(--radius);
@@ -98,7 +166,6 @@
     </header>
 
     <div class="page">
-        <div class="context-bar" id="contextBar">Loading…</div>
 
         <div class="page-tabs">
             <button class="page-tab active" data-target="tab-bases">Bases</button>
@@ -128,16 +195,112 @@
 
         <!-- ── Routes tab ─────────────────────────────────────────────────── -->
         <div class="tab-content" id="tab-routes">
-            <div class="panel">
-                <table class="compact-table" id="routesTable">
-                    <thead><tr>
-                        <th>Route</th><th>Type</th><th>Freq</th>
-                        <th>Cap Y/J/F</th><th>Price Y/J/F</th><th>Added</th>
-                        <th style="width:60px"></th>
-                    </tr></thead>
-                    <tbody><tr><td colspan="7" class="empty">Loading…</td></tr></tbody>
+
+            <!-- Filter bar -->
+            <div class="filter-bar panel" style="padding:14px 16px;margin-bottom:12px">
+                <div class="filter-row">
+                    <!-- Base multi-select -->
+                    <div class="filter-field">
+                        <label>Origin base</label>
+                        <div class="multi-select-wrap" id="baseFilterWrap">
+                            <button class="multi-select-btn" id="baseFilterBtn" onclick="window._links?.toggleBaseDropdown()">
+                                All bases <span class="chevron">▾</span>
+                            </button>
+                            <div class="multi-select-dropdown" id="baseFilterDropdown" style="display:none"></div>
+                        </div>
+                    </div>
+                    <!-- Destination -->
+                    <div class="filter-field">
+                        <label>Destination</label>
+                        <input id="filterDest" placeholder="IATA" maxlength="3" autocomplete="off" style="text-transform:uppercase;width:72px">
+                    </div>
+                    <!-- Distance range -->
+                    <div class="filter-field">
+                        <label>Distance (km)</label>
+                        <div style="display:flex;gap:4px;align-items:center">
+                            <input id="filterDistMin" type="number" placeholder="min" min="0" style="width:62px">
+                            <span class="muted" style="font-size:11px">–</span>
+                            <input id="filterDistMax" type="number" placeholder="max" min="0" style="width:62px">
+                        </div>
+                    </div>
+                    <!-- Type -->
+                    <div class="filter-field">
+                        <label>Category</label>
+                        <select id="filterType" style="width:140px">
+                            <option value="">All types</option>
+                        </select>
+                    </div>
+                    <!-- Frequency range -->
+                    <div class="filter-field">
+                        <label>Freq / wk</label>
+                        <div style="display:flex;gap:4px;align-items:center">
+                            <input id="filterFreqMin" type="number" placeholder="min" min="1" style="width:52px">
+                            <span class="muted" style="font-size:11px">–</span>
+                            <input id="filterFreqMax" type="number" placeholder="max" min="1" style="width:52px">
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-row" style="margin-top:10px">
+                    <!-- Capacity filters -->
+                    <div class="filter-field">
+                        <label>Min cap Y / J / F / Total</label>
+                        <div style="display:flex;gap:4px">
+                            <input id="filterCapY" type="number" placeholder="Y" min="0" style="width:46px" class="pill-eco-input">
+                            <input id="filterCapJ" type="number" placeholder="J" min="0" style="width:46px" class="pill-biz-input">
+                            <input id="filterCapF" type="number" placeholder="F" min="0" style="width:46px" class="pill-first-input">
+                            <input id="filterCapTotal" type="number" placeholder="Tot" min="0" style="width:52px">
+                        </div>
+                    </div>
+                    <!-- Trunk -->
+                    <div class="filter-field" style="justify-content:flex-end;align-self:flex-end">
+                        <label class="filter-check">
+                            <input type="checkbox" id="filterTrunk">
+                            Trunk only
+                        </label>
+                    </div>
+                    <!-- Actions -->
+                    <div class="filter-field" style="align-self:flex-end;margin-left:auto;display:flex;gap:8px">
+                        <button class="btn btn-sm btn-ghost" onclick="window._links?.clearFilters()">Clear</button>
+                        <button class="btn btn-sm btn-ghost" onclick="window._links?.refreshCache()" title="Reload from Firebase">🔄 Refresh</button>
+                        <label class="filter-check" style="margin-left:4px">
+                            <input type="checkbox" id="verboseToggle" onchange="window._links?.setVerbose(this.checked)">
+                            Verbose
+                        </label>
+                    </div>
+                </div>
+                <div style="font-size:11px;color:var(--muted);margin-top:8px" id="routeCount"></div>
+            </div>
+
+            <!-- Routes table -->
+            <div class="panel" style="padding:0;overflow:hidden">
+                <div style="overflow-x:auto">
+                <table class="compact-table routes-table" id="routesTable">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="sortable" data-sort="origin">Origin <span class="sort-ind"></span></th>
+                            <th rowspan="2" class="sortable" data-sort="dest">Dest <span class="sort-ind"></span></th>
+                            <th rowspan="2" class="sortable" data-sort="distance">Dist <span class="sort-ind"></span></th>
+                            <th rowspan="2" class="sortable" data-sort="type">Type <span class="sort-ind"></span></th>
+                            <th rowspan="2" class="sortable" data-sort="freq">Freq <span class="sort-ind"></span></th>
+                            <th colspan="3" class="group-header cap-group">Capacity</th>
+                            <th colspan="3" class="group-header price-group">Price</th>
+                            <th rowspan="2" class="sortable" data-sort="added">Added <span class="sort-ind"></span></th>
+                            <th rowspan="2" style="width:36px"></th>
+                        </tr>
+                        <tr>
+                            <th class="sub-th eco-th sortable" data-sort="capY">Y</th>
+                            <th class="sub-th biz-th sortable" data-sort="capJ">J</th>
+                            <th class="sub-th first-th sortable" data-sort="capF">F</th>
+                            <th class="sub-th eco-th">Y</th>
+                            <th class="sub-th biz-th">J</th>
+                            <th class="sub-th first-th">F</th>
+                        </tr>
+                    </thead>
+                    <tbody><tr><td colspan="12" class="empty" style="padding:24px;text-align:center">Loading…</td></tr></tbody>
                 </table>
-                <div class="add-form">
+                </div>
+
+                <div class="add-form" style="padding:10px 14px;border-top:1px solid var(--border)">
                     <div class="field">
                         <label>Origin (base)</label>
                         <select id="routeOrigin" style="width:90px"><option value="">— base —</option></select>
@@ -152,7 +315,7 @@
                     </div>
                     <button class="btn btn-sm" id="addRouteBtn">+ Add Route</button>
                 </div>
-                <div class="status-msg" id="routeStatus" style="margin-top:6px;font-size:12px"></div>
+                <div class="status-msg" id="routeStatus" style="padding:0 14px 10px;font-size:12px"></div>
             </div>
         </div>
 

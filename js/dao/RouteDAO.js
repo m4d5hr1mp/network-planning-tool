@@ -5,7 +5,7 @@ import AirlineBaseDAO from "./AirlineBaseDAO.js";
 const RouteDAO = {
 
     /** Standard add — enforces origin must be a base owned by airlineId. */
-    async add({ airlineId, originIata, destinationIata, frequency }) {
+    async add({ airlineId, originIata, destinationIata, frequency, distance = null }) {
         const bases = await AirlineBaseDAO.getAllForAirline(airlineId);
         const baseIatas = bases.map(b => b.iata);
         if (!baseIatas.includes(originIata.toUpperCase())) {
@@ -13,11 +13,10 @@ const RouteDAO = {
                 `${originIata} is not one of your bases (${baseIatas.join(", ") || "none"})`
             );
         }
-        return RouteDAO.addForced({ airlineId, originIata, destinationIata, frequency });
+        return RouteDAO.addForced({ airlineId, originIata, destinationIata, frequency, distance });
     },
 
-    /** Force-add — skips base ownership check. Used for route transfers and Done completions. */
-    async addForced({ airlineId, originIata, destinationIata, frequency }) {
+    async addForced({ airlineId, originIata, destinationIata, frequency, distance = null }) {
         const id  = crypto.randomUUID();
         const doc = {
             id, airlineId,
@@ -26,6 +25,7 @@ const RouteDAO = {
             frequency: parseInt(frequency) || 7,
             createdAt: new Date().toISOString()
         };
+        if (distance !== null) doc.distance = distance;
         await db.collection("routes").doc(id).set(doc);
         return doc;
     },

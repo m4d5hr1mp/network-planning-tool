@@ -83,7 +83,7 @@
             try {
                 const airline = await loginWithCredentials(username, password);
                 setCurrentAirlineId(airline.id);
-                setCurrentAirlineDisplay(airline.username);
+                setCurrentAirlineDisplay(airline.displayName || airline.username);
                 window.location.href = "airline-dashboard.html";
             } catch(e) {
                 errEl.textContent = e.message;
@@ -99,7 +99,7 @@
             try {
                 const airline = await createAirlineAccount(username, displayName, password);
                 setCurrentAirlineId(airline.id);
-                setCurrentAirlineDisplay(airline.username);
+                setCurrentAirlineDisplay(airline.displayName || airline.username);
                 closeModal("createModal");
                 window.location.href = "airline-dashboard.html";
             } catch(e) {
